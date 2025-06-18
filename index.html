@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Graficador de Desigualdades</title>
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+</head>
+<body>
+  <h2>Graficador de desigualdades con dos variables</h2>
+  <p>Ejemplo de entrada: <b>y &lt;= 2*x + 3</b> o <b>y &gt;= -x + 1</b></p>
+
+  <label>Desigualdad 1: </label>
+  <input id="ineq1" type="text" value="y <= 2*x + 3" size="30"><br><br>
+
+  <label>Desigualdad 2: </label>
+  <input id="ineq2" type="text" value="y >= -x + 1" size="30"><br><br>
+
+  <button onclick="graficar()">Graficar</button>
+
+  <div id="grafico" style="width: 100%; height: 600px;"></div>
+
+  <script>
+    function graficar() {
+      const ineq1 = document.getElementById('ineq1').value;
+      const ineq2 = document.getElementById('ineq2').value;
+
+      const x_vals = [];
+      const y_vals1 = [];
+      const y_vals2 = [];
+      const xmin = -10, xmax = 10;
+      for (let x = xmin; x <= xmax; x += 0.2) {
+        x_vals.push(x);
+        let y1 = NaN, y2 = NaN;
+        try {
+          y1 = eval(ineq1.replace("y", "").replace("=", "").replace("<=", "-").replace(">=", "-").replace("<", "-").replace(">", "-"));
+          y2 = eval(ineq2.replace("y", "").replace("=", "").replace("<=", "-").replace(">=", "-").replace("<", "-").replace(">", "-"));
+        } catch (e) {
+          alert("Error en las expresiones. Revisa la sintaxis.");
+        }
+
+        try {
+          y_vals1.push(eval(ineq1.split(/<=|>=|<|>/)[1].replace(/x/g, `(${x})`)));
+          y_vals2.push(eval(ineq2.split(/<=|>=|<|>/)[1].replace(/x/g, `(${x})`)));
+        } catch {
+          y_vals1.push(NaN);
+          y_vals2.push(NaN);
+        }
+      }
+
+      // Sombrear región factible
+      const y_min = -10, y_max = 10;
+      const region = { x: [], y: [] };
+      for (let x = xmin; x <= xmax; x += 0.2) {
+        for (let y = y_min; y <= y_max; y += 0.2) {
+          const check1 = eval(ineq1.replace(/x/g, `(${x})`).replace(/y/g, `(${y})`));
+          const check2 = eval(ineq2.replace(/x/g, `(${x})`).replace(/y/g, `(${y})`));
+          if (check1 && check2) {
+            region.x.push(x);
+            region.y.push(y);
+          }
+        }
+      }
+
+      const traza1 = {
+        x: x_vals,
+        y: y_vals1,
+        mode: 'lines',
+        name: 'Desigualdad 1',
+        line: {color: 'red'}
+      };
+
+      const traza2 = {
+        x: x_vals,
+        y: y_vals2,
+        mode: 'lines',
+        name: 'Desigualdad 2',
+        line: {color: 'blue'}
+      };
+
+      const trazaRelleno = {
+        x: region.x,
+        y: region.y,
+        mode: 'markers',
+        name: 'Región solución',
+        marker: {
+          color: 'rgba(0,200,0,0.3)',
+          size: 4
+        },
+        type: 'scatter'
+      };
+
+      const data = [traza1, traza2, trazaRelleno];
+      const layout = {
+        title: 'Gráfico de desigualdades',
+        xaxis: {range: [xmin, xmax]},
+        yaxis: {range: [y_min, y_max]},
+        showlegend: true
+      };
+
+      Plotly.newPlot('grafico', data, layout);
+    }
+  </script>
+</body>
+</html>
